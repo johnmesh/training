@@ -14,6 +14,14 @@ contract BankApp {
 
     mapping(address => Account) accounts;
 
+    modifier isLoggedIn(address _user) {
+        Account memory account = accounts[_user];
+        if (!account.status) {
+            revert("User not logged in");
+        }
+        _;
+    }
+
     constructor(string memory _name) {
         manager = msg.sender;
         name = _name;
@@ -47,7 +55,7 @@ contract BankApp {
     function login() public returns (bool) {
         address _user = msg.sender;
 
-        Account memory account = accounts[_user];
+        Account storage account = accounts[_user];
 
         if (account.id == 0) {
             revert("Account does not exist");
@@ -55,5 +63,24 @@ contract BankApp {
         if (account.status) {
             return true;
         }
+
+        account.status = true;
+    }
+
+    function deposit(uint256 amount) public isLoggedIn(msg.sender) {
+        Account memory account = accounts[msg.sender]; // copies the account recorrds from storage to memory location
+        account.balance += amount;
+
+        accounts[msg.sender] = account; //overrites the record in the storage locations
+    }
+
+    function balanceOf(address _user)
+        public
+        view
+        isLoggedIn(_user)
+        returns (uint256)
+    {
+        Account memory account = accounts[_user];
+        return account.balance;
     }
 }
