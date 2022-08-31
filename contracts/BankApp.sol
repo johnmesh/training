@@ -1,13 +1,15 @@
 pragma solidity 0.8.4;
 
 contract BankApp {
-    string name;
     address public manager;
+    string name;
+
     struct Account {
         uint256 id;
         string name;
         string kraPin;
         uint256 balance;
+        bool status;
     }
 
     mapping(address => Account) accounts;
@@ -20,11 +22,11 @@ contract BankApp {
     function register(
         address user,
         uint256 id,
-        string memory name,
+        string memory _name,
         string memory kraPin,
         uint256 balance
     ) public returns (bool) {
-        require(msg.sender == manager, "Send not manager");
+        require(msg.sender == manager, "Sender not manager");
 
         Account memory account = accounts[user];
         // check if the account is created
@@ -33,12 +35,25 @@ contract BankApp {
         }
 
         account.id = id;
-        account.name = name;
+        account.name = _name;
         account.kraPin = kraPin;
         account.balance = balance;
 
         accounts[user] = account;
 
         return true;
+    }
+
+    function login() public returns (bool) {
+        address _user = msg.sender;
+
+        Account memory account = accounts[_user];
+
+        if (account.id == 0) {
+            revert("Account does not exist");
+        }
+        if (account.status) {
+            return true;
+        }
     }
 }
