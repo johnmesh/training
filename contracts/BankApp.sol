@@ -3,6 +3,9 @@ pragma solidity 0.8.4;
 contract BankApp {
     address public manager;
     string name;
+    event Register(address creator, uint256 accountId, uint256 timestamp);
+    event Deposit(address sender, uint256 amount, uint256 timestamp);
+    event Transfer(address sender, address receiver, uint256 amount);
 
     struct Account {
         uint256 id;
@@ -48,7 +51,8 @@ contract BankApp {
         account.balance = balance;
 
         accounts[user] = account;
-
+        // emit the event
+        emit Register(msg.sender, id, block.timestamp);
         return true;
     }
 
@@ -72,15 +76,36 @@ contract BankApp {
         account.balance += amount;
 
         accounts[msg.sender] = account; //overrites the record in the storage locations
+
+        emit Deposit(msg.sender, amount, block.timestamp);
     }
 
     function balanceOf(address _user)
         public
         view
-        isLoggedIn(_user)
+        isLoggedIn(msg.sender)
         returns (uint256)
     {
         Account memory account = accounts[_user];
         return account.balance;
+    }
+
+    function transfer(address _to, uint256 amount)
+        public
+        isLoggedIn(msg.sender)
+    {
+        //logic goes here
+        Account storage account0 = accounts[msg.sender]; // the sender's account
+        Account storage account1 = accounts[_to]; // the receiver's account
+
+        require(account0.balance >= amount, "Insufficient balance");
+        //check if the receiver account exist
+        require(account1.id != 0, "Account does not exist");
+
+        //transfer the amount
+        account0.balance -= amount;
+        account1.balance += amount;
+        // emit event
+        emit Transfer(msg.sender, _to, amount);
     }
 }
